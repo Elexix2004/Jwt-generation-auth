@@ -8,6 +8,7 @@ import com.example.demo.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,15 +22,20 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        AppUser user = userRepository.findByUsername(loginRequest.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        Optional<AppUser> optionalUser = userRepository.findByUsername(loginRequest.getUsername());
 
-        if (user == null || !user.getPassword().equals(loginRequest.getPassword())) {
-            return ResponseEntity.status(401).body("Invalid username or password");
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(401).body("{\"error\":\"Invalid username or password\"}");
+        }
+
+        AppUser user = optionalUser.get();
+
+        if (!user.getPassword().equals(loginRequest.getPassword())) {
+            return ResponseEntity.status(401).body("{\"error\":\"Invalid username or password\"}");
         }
 
         String token = jwtService.generateToken(user.getUsername(), user.getRole());
-
         return ResponseEntity.ok(new LoginResponse(token));
     }
+
 }

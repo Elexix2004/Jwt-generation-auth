@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+  </head>
+  <body>
+    <h1>Welcome Admin!</h1>
+    <div id="admin-content"></div>
+
+    <script>
+      // 🔐 Get the token from localStorage
+      const token = localStorage.getItem("jwt");
+
+      if (!token) {
+        // No token = redirect to login
+        alert("No token found. Redirecting to login.");
+        window.location.href = "login.html";
+      } else {
+        // Decode the token to extract role
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const role = payload.role;
+
+        if (role !== "ROLE_ADMIN") {
+          alert("Access denied. You are not an admin.");
+          window.location.href = "login.html";
+        } else {
+          // ✅ Allowed: Make a fetch call to admin endpoint
+          fetch("http://localhost:8080/admin/hello", {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          })
+            .then((response) => response.text())
+            .then((data) => {
+              document.getElementById("admin-content").innerText = data;
+            })
+            .catch((err) => {
+              console.error("Error:", err);
+            });
+        }
+      }
+    </script>
+  </body>
+</html>

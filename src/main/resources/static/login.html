@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login Page</title>
+  </head>
+  <body>
+    <h2>Login</h2>
+    <form id="loginForm">
+      <label for="username">Username:</label>
+      <input type="text" id="username" required /><br /><br />
+      <label for="password">Password:</label>
+      <input type="password" id="password" required /><br /><br />
+      <button type="submit">Login</button>
+    </form>
+
+    <p id="responseMsg" style="color: red"></p>
+
+    <script>
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault(); // Prevent page reload
+
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          try {
+            const response = await fetch("http://localhost:8080/auth/login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ username, password }),
+            });
+
+            // ✅ Only try to parse JSON if response is ok
+            if (!response.ok) {
+              const errorText = await response.text(); // plain text
+              throw new Error(errorText || "Login failed");
+            }
+
+            const data = await response.json(); // safe now
+            document.getElementById("responseMsg").innerText =
+              "Login successful!";
+            localStorage.setItem("token", data.token);
+
+            // Optional: decode role from JWT and redirect
+            const payload = JSON.parse(atob(data.token.split(".")[1]));
+            const role = payload.role;
+
+            if (role === "ROLE_ADMIN") {
+              window.location.href = "admin.html";
+            } else {
+              window.location.href = "user.html";
+            }
+          } catch (err) {
+            document.getElementById("responseMsg").innerText =
+              "Error: " + err.message;
+          }
+        });
+    </script>
+  </body>
+</html>
