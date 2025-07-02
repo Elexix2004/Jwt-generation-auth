@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>User Dashboard</title>
+  </head>
+  <body>
+    <h1>Welcome User!</h1>
+    <div id="user-content"></div>
+
+    <script>
+      // ✅ Use the correct key name
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("No token found. Redirecting to login.");
+        window.location.href = "login.html";
+      } else {
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          const role = payload.role;
+
+          if (role !== "ROLE_USER") {
+            alert("Access denied. You are not a regular user.");
+            window.location.href = "login.html";
+          } else {
+            // ✅ Fetch user-only data
+            fetch("http://localhost:8080/user/hello", {
+              method: "GET",
+              headers: {
+                Authorization: "Bearer " + token,
+              },
+            })
+              .then((response) => response.text())
+              .then((data) => {
+                document.getElementById("user-content").innerText = data;
+              })
+              .catch((err) => {
+                console.error("Error:", err);
+              });
+          }
+        } catch (e) {
+          console.error("Invalid token:", e);
+          alert("Invalid token. Redirecting to login.");
+          window.location.href = "login.html";
+        }
+      }
+    </script>
+  </body>
+</html>

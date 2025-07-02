@@ -3,6 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <title>Login Page</title>
+    <style>
+      #responseMsg.success {
+        color: green;
+      }
+
+      #responseMsg.error {
+        color: red;
+      }
+    </style>
   </head>
   <body>
     <h2>Login</h2>
@@ -14,7 +23,7 @@
       <button type="submit">Login</button>
     </form>
 
-    <p id="responseMsg" style="color: red"></p>
+    <p id="responseMsg"></p>
 
     <script>
       document
@@ -24,6 +33,7 @@
 
           const username = document.getElementById("username").value;
           const password = document.getElementById("password").value;
+          const responseMsg = document.getElementById("responseMsg");
 
           try {
             const response = await fetch("http://localhost:8080/auth/login", {
@@ -34,29 +44,33 @@
               body: JSON.stringify({ username, password }),
             });
 
-            // ✅ Only try to parse JSON if response is ok
             if (!response.ok) {
-              const errorText = await response.text(); // plain text
+              const errorText = await response.text();
               throw new Error(errorText || "Login failed");
             }
 
-            const data = await response.json(); // safe now
-            document.getElementById("responseMsg").innerText =
-              "Login successful!";
-            localStorage.setItem("token", data.token);
+            const data = await response.json();
+            localStorage.setItem("token", data.token); // ✅ Save token
 
-            // Optional: decode role from JWT and redirect
+            // Show success
+            responseMsg.innerText = "Login successful!";
+            responseMsg.className = "success";
+
+            // Decode role from token and redirect accordingly
             const payload = JSON.parse(atob(data.token.split(".")[1]));
             const role = payload.role;
 
-            if (role === "ROLE_ADMIN") {
-              window.location.href = "admin.html";
-            } else {
-              window.location.href = "user.html";
-            }
+            // Delay to let message show briefly before redirect
+            setTimeout(() => {
+              if (role === "ROLE_ADMIN") {
+                window.location.href = "admin.html";
+              } else {
+                window.location.href = "user.html";
+              }
+            }, 500);
           } catch (err) {
-            document.getElementById("responseMsg").innerText =
-              "Error: " + err.message;
+            responseMsg.innerText = "Error: " + err.message;
+            responseMsg.className = "error";
           }
         });
     </script>
