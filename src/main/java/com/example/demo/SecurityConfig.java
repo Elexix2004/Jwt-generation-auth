@@ -17,7 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.util.List;
 
 import java.io.IOException;
@@ -38,8 +38,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/auth/login", "/login.html", "/admin.html", "/user.html").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
 
@@ -68,6 +69,8 @@ public class SecurityConfig {
                     Claims claims = jwtService.validateToken(token);
                     String username = claims.getSubject();
                     String role = claims.get("role", String.class);
+
+                    // System.out.println("✅ JWT validated: " + username + " with role " + role);
 
                     // Inject role as a GrantedAuthority
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
